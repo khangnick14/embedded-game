@@ -1,6 +1,7 @@
 // ----------------------------------- framebf.c -------------------------------------
 #include "../utils/mbox.h"
 #include "../../uart/uart1.h"
+#include "framebf.h"
 
 //Use RGBA32 (32 bits for each pixel)
 #define COLOR_DEPTH 32
@@ -83,3 +84,85 @@ void drawPixelARGB32(int x, int y, unsigned int attr) {
     int offs = (y * pitch) + (COLOR_DEPTH/8 * x);
     *((unsigned int*)(fb + offs)) = attr;
 }
+
+void clearScreen() {
+    int count = 0;
+    int count1 = 0;
+    for(int i = 0; i < VIRTUAL_SCREEN_WIDTH * VIRTUAL_SCREEN_HEIGHT; i++){
+        drawPixelARGB32(count, count1, 0x00000000);
+        if(count < VIRTUAL_SCREEN_WIDTH - 1) {
+            count++;
+        } else {
+            count = 0;
+            count1++;
+        }
+
+    }
+}
+
+void drawBackground() {
+    const unsigned long* back = getBackground();
+    int count = 0;
+    int count1 = 0;
+    for (int i = 0; i <= (VIRTUAL_SCREEN_HEIGHT * VIRTUAL_SCREEN_WIDTH); i++) {
+        drawPixelARGB32(count, count1, back[i]);
+        count++;
+        if (count == VIRTUAL_SCREEN_WIDTH) {
+            count = 0;
+            count1++;
+        }
+    }
+}
+
+void erease64x64(int x, int y) {
+    int count = 0;
+    int count1 = 0;
+    for (int i = 0; i <= (SIZE_64 * SIZE_64); i++) {
+        drawPixelARGB32(x + count, y + count1, 0x00000000);
+        count++;
+        if (count == 64) {
+            count = 0;
+            count1++;
+        }
+    }
+}
+
+void erease24x24(int x, int y) {
+    int count = 0;
+    int count1 = 0;
+    for (int i = 0; i <= (SIZE_24 * SIZE_24); i++) {
+        drawPixelARGB32(x + count, y + count1, 0x00000000);
+        count++;
+        if (count == 24) {
+            count = 0;
+            count1++;
+        }
+    }
+}
+
+void eraseBySize(int x, int y, int width, int height) {
+    int count = 0;
+    int count1 = 0;
+    for (int i = 0; i < (width * height); i++) {
+        drawPixelARGB32(x + count, y + count1, 0x00000000);
+        count++;
+        if (count == width) {
+            count = 0;
+            count1++;
+        }
+    }
+}
+
+void drawline(){
+    int count = 290;
+    int count1 = 0;
+    for (int i = 0; i <= (VIRTUAL_SCREEN_HEIGHT * 10); i++) {
+        drawPixelARGB32(count, count1, 0x00ffffff);
+        count++;
+        if (count == 300) {
+            count = 290;
+            count1++;
+        }
+    }
+}
+
