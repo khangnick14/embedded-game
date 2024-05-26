@@ -1,4 +1,4 @@
-#include "../kernel/gpio.h"
+#include "../src/utils/gpio.h"
 
 /* Auxilary mini UART (UART1) registers */
 #define AUX_ENABLE      (* (volatile unsigned int*)(MMIO_BASE+0x00215004))

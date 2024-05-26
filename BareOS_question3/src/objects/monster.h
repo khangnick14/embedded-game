@@ -1,0 +1,1 @@
+const unsigned long* getMonster(int num);
