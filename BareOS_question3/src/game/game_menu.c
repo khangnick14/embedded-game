@@ -31,3 +31,13 @@ void chooseShip(int arrowPosition) {
     drawArrow(130 + arrowPosition, 316);
     drawString(100, 500, "Press 'enter' to return", 0x00ffffff, 4);
 }
+
+void chooseLevel(int arrowPosition) {
+    clearScreen();
+    drawBackground();
+    drawString(100, 100, "Choose Difficulty Level", 0x00ffffff, 5);
+    drawString(180, 300, "Easy", 0x00ffffff, 3);
+    drawString(180, 400, "Medium", 0x00ffffff, 3);
+    drawString(180, 500, "Hard", 0x00ffffff, 3);
+    drawArrow(130, 295 + arrowPosition);
+}

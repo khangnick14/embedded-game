@@ -2,55 +2,48 @@
 #include "../uart/uart1.h"
 #include "./game/game_menu.h"
 #include "./game/game_logic.h"
+#include "./utils/utils.h"
+#include "./graphic/framebf.h"
+
 
 #define MAX_CMD_SIZE 100
+int start_game_flag = 0;
 
-
-void cli()
-{
+void cli() {
 	static char cli_buffer[MAX_CMD_SIZE];
 	static int index = 0;
 
 	//read and send back each char
-	char c = uart_getc();
-	uart_sendc(c);
+    if (getUart() != '\n') { 
+        char c = uart_getc();
+	    uart_sendc(c);
+        //put into a buffer until got new line character
+	    if (c != '\n') {
+            if (c == '\b' && index > 0) {
+                uart_sendc(' ');
+                uart_sendc('\b');
+                cli_buffer[index - 1] = ' ';
+                index--;
+            } else if (c != '\b'){
+                cli_buffer[index] = c; //Store into the buffer
+                index++;
+            } else {
+                uart_sendc('>');
+            }
+    	}   else {
+            cli_buffer[index] = '\0';
+            if (compareStrings(cli_buffer, "playgame")) {
+                start_game_flag = 1;
+            } else if (compareStrings(cli_buffer, "cls")) {
+                clearScreen();
+            }
 
-	//put into a buffer until got new line character
-	if (c != '\n'){
-        if (c == '\b' && index > 0){
-            uart_sendc(' ');
-            uart_sendc('\b');
-            cli_buffer[index - 1] = ' ';
-            index--;
-        } else if (c != '\b'){
-            cli_buffer[index] = c; //Store into the buffer
-		    index++;
-        } else {
-            uart_sendc('>');
-        }
-		
-
-	} else if (c == '\n'){
-		cli_buffer[index] = '\0';
-
-		
-		//uart_puts(cli_buffer); uart_puts("\n");
-        //uart_puts("BareOS:>");
-        
-		/* Compare with supported commands and execute
-		* ........................................... */
-
-        if (compareStrings(cli_buffer, "playgame")) {
-            game_runner();
-        } else if (compareStrings(cli_buffer, "cls")) {
-            clearScreen();
-        }
-
-        uart_puts("Bare0S:>");
-        //Return to command line
-        index = 0;
-        for (int i = 0; i < 100; i++) {
+            uart_puts("Bare0S:>");
+            //Return to command line
+            index = 0;
+            for (int i = 0; i < 100; i++) {
                 cli_buffer[i] = '\0';
+            }
         }
 	}
 }
@@ -82,5 +75,17 @@ void main()
     // echo everything back
     while(1) {
         cli();
+        if (start_game_flag) {
+            // Clear the flag
+            start_game_flag = 0;
+
+            // Start the game loop
+            gameloop();
+            
+            // Print CLI prompt after exiting the game
+            uart_puts("\nBare0S:>");
+        }
+        wait_msec(10);
+
     }
 }

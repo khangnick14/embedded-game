@@ -5,6 +5,8 @@
 #include "../graphic/game_graphic.h"
 #include "../../uart/uart1.h"
 
+
+
 void navigate_home_menu(int *menu_selected_option, char *user_input) {
     while (1) {
         switch (*user_input) {
@@ -30,9 +32,33 @@ void navigate_home_menu(int *menu_selected_option, char *user_input) {
     }
 }
 
-void execute_home_option(int menu_selected_option, int *ship_selected_option, char *user_input) {
+void navigate_level_selection(int *level_selected_option, char *user_input) {
+    while (1) {
+        chooseLevel(*level_selected_option);
+        *user_input = uart_getc();
+        switch (*user_input) {
+            case 's':
+                *level_selected_option = (*level_selected_option + 100) % 300;
+                break;
+            case 'w': 
+                *level_selected_option = (*level_selected_option - 100) % 300;
+                if (*level_selected_option < 0) {
+                    *level_selected_option = 200;
+                }
+                break;
+            case '\n':
+                return;
+            default:
+                break;
+        }
+    }
+}
+
+void execute_home_option(int menu_selected_option, int *ship_selected_option, char *user_input, int *level_selected_option) {
     if (menu_selected_option == 0) {
-        startGame(*ship_selected_option, 5, 34);
+        *level_selected_option = 0; // Reset level selected option
+        navigate_level_selection(level_selected_option, user_input); // Navigate level selection screen
+        startGame(*ship_selected_option, 5, 34, *level_selected_option / 100); // Start the game with selected level
     } else if (menu_selected_option == 100) {
         display_how_to_play(user_input);
     } else if (menu_selected_option == 200) {
@@ -41,45 +67,41 @@ void execute_home_option(int menu_selected_option, int *ship_selected_option, ch
 }
 
 void navigate_ship_selection(int *ship_selected_option, char *user_input) {
-    chooseShip(*ship_selected_option);
-    *user_input = uart_getc();
     while (1) {
+        chooseShip(*ship_selected_option);
+        *user_input = uart_getc();
         switch (*user_input) {
             case 'd':
                 *ship_selected_option = (*ship_selected_option + 200) % 600;
-                chooseShip(*ship_selected_option);
                 break;
             case 'a':
                 *ship_selected_option = (*ship_selected_option - 200) % 600;
                 if (*ship_selected_option < 0) {
                     *ship_selected_option = 400;
                 }
-                chooseShip(*ship_selected_option);
                 break;
             case '\n':
                 return;
             default:
                 break;
         }
-        *user_input = uart_getc();
     }
 }
 
 void display_how_to_play(char *user_input) {
-    howtoplay();
-    *user_input = uart_getc();
     while (1) {
+        howtoplay();
+        *user_input = uart_getc();
         if (*user_input == '\n') {
             return;
         }
-        *user_input = uart_getc();
     }
 }
 
-
-void game_runner(){
+void gameloop(){
     static int menu_selected_option = 0;
     static int ship_selected_option = 0;
+    static int level_selected_option = 0;
 
     while (1)
     {
@@ -88,11 +110,11 @@ void game_runner(){
 
         // Display the home menu + arrow position
         navigate_home_menu(&menu_selected_option, &user_input);
-
-        // Execute the selected menu option
-        execute_home_option(menu_selected_option, &ship_selected_option, &user_input);
+        execute_home_option(menu_selected_option, &ship_selected_option, &user_input, &level_selected_option);
+        menu_selected_option = 0; // Reset menu selected option
     }
 }
+
 
 int randomize(int min, int max){
     static unsigned int lcg_state = 1;
@@ -100,20 +122,37 @@ int randomize(int min, int max){
     return (lcg_state % (max - min + 1)) + min;
 }
 
-void spawnMonsters(int monsters, int monster_details[][3], int moveCount[], int moveThreshold[], int monster_status[]) {
+void spawnMonsters(int monsters, int monster_details[][3], int moveCount[], int moveThreshold[], int monster_status[], int level) {
     for (int i = 0; i < monsters; i++) {
+        int spawnRate = 0;
+        int descentSpeed = 1; // Default descent speed
+        switch (level) {
+            case 0: // Easy
+                spawnRate = i * randomize(80, 100);
+                break;
+            case 1: // Medium
+                spawnRate = i * randomize(60, 80);
+                descentSpeed = 3;
+                break;
+            case 2: // Hard
+                spawnRate = i * randomize(50, 60);
+                descentSpeed = 4;
+                break;
+            default:
+                break;
+        }
         // Check if it's time for this monster to move and it is still active
-        if (moveCount[i] >= moveThreshold[i] && monster_status[i] == 0) {
+        if (moveCount[i] >= spawnRate && monster_status[i] == 0) {
             // Draw the monster
             drawMonster(monster_details[i][0], monster_details[i][1], monster_details[i][2]);
             // Erase the screen when the monster moves down
-            eraseBySize(monster_details[i][0], monster_details[i][1] - 2, 64, 2);
+            eraseBySize(monster_details[i][0], monster_details[i][1] - descentSpeed, 64, descentSpeed);
             // Move the monster down
-            monster_details[i][1] += 2;
+            monster_details[i][1] += descentSpeed;
         }
         if (monster_details[i][1] > 536 && monster_status[i] == 0) {
             monster_status[i] = 3;
-        }
+        }        
     }
 }
 
@@ -195,7 +234,7 @@ void updateBulletPositions(int fx[], int fy[], int ox) {
     }
 }
 
-void startGame(int num, int heart, int monsters) {
+void startGame(int num, int heart, int monsters, int level) {
     clearScreen();  // Clear screen first
 
     // Left sections: show number of aliens and current hearts
@@ -231,7 +270,7 @@ void startGame(int num, int heart, int monsters) {
     
     /* Store the bullet cooldown */
     int bulletCooldowns[3] = {0,0,0};
-
+   
     int num_monster_alive = monsters, num_heart_left = heart, shouldUpdateInterface  = 0;
 
     for (int i = 0; i < monsters; i++) {
@@ -253,7 +292,7 @@ void startGame(int num, int heart, int monsters) {
     while (num_heart_left > 0 && num_monster_alive > 0) {
         drawShip(ox, oy, ship);
 
-        spawnMonsters(monsters, monster_details, moveCount, moveThreshold, monster_status);
+        spawnMonsters(monsters, monster_details, moveCount, moveThreshold, monster_status, level);
         shootBullets(fx, fy, bulletCooldowns, bullet_status);
 
         wait_msec(40000);
@@ -287,5 +326,5 @@ void startGame(int num, int heart, int monsters) {
         drawString(450, 200, "GameOver!!", 0x00ffffff, 7);
     }
     drawString(400, 500, "Press any key to return!!", 0x00ffffff, 3);
-    while (!getUart());
+    while (uart_getc() != '\n');
 }
