@@ -1,46 +1,45 @@
+// -----------------------------------uart.c
+
 #include "uart1.h"
 
 /**
  * Set baud rate and characteristics (115200 8N1) and map to GPIO
  */
-void uart_init()
-{
-    unsigned int r;
+void uart_init() {
+    register unsigned int r;
 
     /* initialize UART */
-    AUX_ENABLE |= 1;     //enable mini UART (UART1) 
-    AUX_MU_CNTL = 0;	 //stop transmitter and receiver
-    AUX_MU_LCR  = 3;     //8-bit mode (also enable bit 1 to be used for RPI3)
-    AUX_MU_MCR  = 0;	 //clear RTS (request to send)
-    AUX_MU_IER  = 0;	 //disable interrupts
-    AUX_MU_IIR  = 0xc6;  //enable and clear FIFOs
-    AUX_MU_BAUD = 270;   //configure 115200 baud rate [system_clk_freq/(baud_rate*8) - 1]
+    AUX_ENABLE |= 1;    // enable UART1, AUX mini uart (AUXENB)
+    AUX_MU_CNTL = 0;    // stop transmitter and receiver
+    AUX_MU_LCR = 3;     // 8-bit mode (also enable bit 1 to be used for RBP3)
+    AUX_MU_MCR = 0;     // RTS (request to send)
+    AUX_MU_IER = 0;     // disable interrupts
+    AUX_MU_IIR = 0xc6;  // clear FIFOs
+    AUX_MU_BAUD = 270;  // 115200 baud   (system_clk_freq/(baud_rate*8) - 1)
 
     /* Note: refer to page 11 of ARM Peripherals guide for baudrate configuration 
     (system_clk_freq is 250MHz by default) */
 
-    /* map UART1 to GPIO pins 14 and 15 */
+    // map UART1 to GPIO pins 14 and 15
     r = GPFSEL1;
-    r &=  ~( (7 << 12)|(7 << 15) ); //clear bits 17-12 (FSEL15, FSEL14)
-    r |= (0b010 << 12)|(0b010 << 15);   //set value 0b010 (select ALT5: TXD1/RXD1)
+    r &= ~((7 << 12) | (7 << 15));  // Clear bits 12-17 (gpio14, gpio15)
+    r |= (0b010 << 12) | (0b010 << 15);     // Set value 2 (select ALT5: UART1)
     GPFSEL1 = r;
 
-	/* enable GPIO 14, 15 */
-#ifdef RPI3 //RPI3
-	GPPUD = 0;            //No pull up/down control
-	//Toogle clock to flush GPIO setup
-	r = 150; while(r--) { asm volatile("nop"); } //waiting 150 cycles
-	GPPUDCLK0 = (1 << 14)|(1 << 15); //enable clock for GPIO 14, 15
-	r = 150; while(r--) { asm volatile("nop"); } //waiting 150 cycles
-	GPPUDCLK0 = 0;        // flush GPIO setup
+    /* enable GPIO 14, 15 */
+    GPPUD = 0;  // No pull up/down control
+    r = 150;
+    while (r--) {
+        asm volatile("nop");
+    }                                    // waiting 150 cycles
+    GPPUDCLK0 = (1 << 14) | (1 << 15);  // enable clock for GPIO 14, 15
+    r = 150;
+    while (r--) {
+        asm volatile("nop");
+    }                // waiting 150 cycles
+    GPPUDCLK0 = 0;  // flush GPIO setup
 
-#else //RPI4
-	r = GPIO_PUP_PDN_CNTRL_REG0;
-	r &= ~((3 << 28) | (3 << 30)); //No resistor is selected for GPIO 14, 15
-	GPIO_PUP_PDN_CNTRL_REG0 = r;
-#endif
-
-    AUX_MU_CNTL = 3;      //enable transmitter and receiver (Tx, Rx)
+    AUX_MU_CNTL = 3;  // Enable transmitter and receiver (Tx, Rx)
 }
 
 /**
@@ -224,6 +223,10 @@ void cli() {
             uart_puts("\n[DEBUG]: Number of commands received: ");
             itoa(command_count, count_str);
             uart_puts(count_str);
+
+            // Log UART Configuration
+            log_uart_configuration();
+
             uart_puts("\nBare0S:>");
             //Return to command line
             index = 0;
@@ -232,4 +235,74 @@ void cli() {
             }
         }
 	}
+}
+
+unsigned int calculate_baud_rate() {
+    unsigned int baud_reg_val = AUX_MU_BAUD;
+    return SYSTEM_CLK_FREQ / (8 * (baud_reg_val + 1));
+}
+
+void log_baud_rate() {
+    char buffer[10];
+    // Log baud rate
+    uart_puts("\n  Baud Rate: ");
+    itoa(calculate_baud_rate(), buffer);
+    uart_puts(buffer);
+}
+
+void log_data_bits() {
+     //extract the two least significant bits of AUX_MU_LCR
+    volatile unsigned int value = (AUX_MU_LCR >> 5) & 0x3;
+    uart_puts("\n  Data Bits: ");
+    switch (value) {
+        case 0x3:
+            uart_puts("8");
+            break;
+        case 0x2:
+            uart_puts("7");
+            break;
+        case 0x1:
+            uart_puts("6");
+            break;
+        case 0x0:
+            uart_puts("5");
+            break;
+        default:
+            uart_puts("unknown");
+            break;
+    }
+}
+
+void log_parity() {
+    uart_puts("\n  Parity: ");
+    if ((AUX_MU_LCR & (1 << 1)) == 0) {
+        uart_puts("Parity is disabled");
+    } else {
+        if ((AUX_MU_LCR & (1 << 2)) == 0) {
+            uart_puts("Odd parity");
+        } else {
+            uart_puts("Even parity");
+        }
+    }
+}
+
+void log_stop_bits() {
+    uart_puts("\n  Stop Bits: ");
+    if ((AUX_MU_LCR & (1 << 3)) == 0) {
+        uart_puts("1 stop bit");
+    } else {
+        uart_puts("2 stop bits");
+    }
+}
+
+void log_uart_configuration() {
+    uart_puts("\n[DEBUG]: Current UART configuration: \n");
+    log_baud_rate();
+    uart_puts("\n");
+    log_data_bits();
+    uart_puts("\n");
+    log_parity();
+    uart_puts("\n");
+    log_stop_bits();
+    uart_puts("\n");
 }

@@ -40,6 +40,7 @@ void main()
     uart_puts("\nBare0S:>");
     // echo everything back
     while(1) {
+            // Handle UART input
         cli();
         if (start_game_flag) {
             // Clear the flag

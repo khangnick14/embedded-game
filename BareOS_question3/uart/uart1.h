@@ -17,6 +17,8 @@
 #define AUX_MU_BAUD     (* (volatile unsigned int*)(MMIO_BASE+0x00215068))
 
 #define MAX_CMD_SIZE 100
+#define SYSTEM_CLK_FREQ 250000000
+
 extern volatile int start_game_flag;
 
 /* Function prototypes */
@@ -34,4 +36,9 @@ void cli();
 
 
 /* Function to get UART configuration*/
-// unsigned int calculate_baud_rate();
+unsigned int calculate_baud_rate();
+void log_baud_rate();
+void log_data_bits();
+void log_parity();
+void log_stop_bits();
+void log_uart_configuration();
