@@ -19,7 +19,7 @@ void drawMonster(int x, int y, int num) {
     }
 }
 
-void ereaseMonster(int x, int y) {
+void eraseMonster(int x, int y) {
     int count = 0;
     int count1 = 0;
     for (int i = 0; i <= (ITEM_DEFAULT_SIZE * 2); i++) {
@@ -116,20 +116,8 @@ void drawBullet(int x, int y) {
     }
 }
 
-void ereaseBullet(int x, int y){
-    int count = 0;
-    int count1 = 0;
-    for (int i = 0; i <= (BULLET_DEFAULT_SIZE * (BULLET_DEFAULT_SIZE / 2)); i++) {
-        drawPixelARGB32(x + count, y + count1, 0x00000000);
-        count++;
-        if (count == BULLET_DEFAULT_SIZE) {
-            count = 0;
-            count1++;
-        }
-    }
-}
 
-void showalien(int num) {
+void display_monster_alive(int num) {
     int ox = 20;
     int oy = 50;
     int y = num / 5;
@@ -148,7 +136,7 @@ void showalien(int num) {
     }
 }
 
-void showheart(int num) {
+void display_heart_left(int num) {
     int ox = 20;
     for (int i = 0; i < num; i++) {
         drawHeart(ox, 700);

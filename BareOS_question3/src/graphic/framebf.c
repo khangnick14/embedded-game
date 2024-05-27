@@ -2,6 +2,7 @@
 #include "../utils/mbox.h"
 #include "../../uart/uart1.h"
 #include "framebf.h"
+#include "../objects/background.h"
 
 //Use RGBA32 (32 bits for each pixel)
 #define COLOR_DEPTH 32
@@ -114,7 +115,7 @@ void drawBackground() {
     }
 }
 
-void erease64x64(int x, int y) {
+void erase64x64(int x, int y) {
     int count = 0;
     int count1 = 0;
     for (int i = 0; i <= (SIZE_64 * SIZE_64); i++) {
@@ -127,7 +128,7 @@ void erease64x64(int x, int y) {
     }
 }
 
-void erease24x24(int x, int y) {
+void erase24x24(int x, int y) {
     int count = 0;
     int count1 = 0;
     for (int i = 0; i <= (SIZE_24 * SIZE_24); i++) {

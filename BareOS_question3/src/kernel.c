@@ -33,9 +33,14 @@ void cli() {
     	}   else {
             cli_buffer[index] = '\0';
             if (compareStrings(cli_buffer, "playgame")) {
+                uart_puts("\nACK: Starting the game\n");
                 start_game_flag = 1;
+
             } else if (compareStrings(cli_buffer, "cls")) {
+                uart_puts("\nACK: Clearing the screen\n");
                 clearScreen();
+            } else {
+                uart_puts("\nNAK: Invalid command\n");
             }
 
             uart_puts("Bare0S:>");
@@ -48,15 +53,9 @@ void cli() {
 	}
 }
 
-
-
-void main()
-{
-    // set up serial console
-    uart_init();
-    // say hello
-    uart_puts("\n\n\n"
-    "   ___                           _           _                                  _\n"
+void display_information() {
+ uart_puts("\n\n\n"
+    "   ___                            _           _                                  _\n"
     "  / _ \\_ __ ___  _   _ _ __     /_\\  ___ ___(_) __ _ _ __  _ __ ___   ___ _ __ | |_\n" 
     " / /_\\/ '__/ _ \\| | | | '_ \\   //_\\\\/ __/ __| |/ _` | '_ \\| '_ ` _ \\ / _ \\ '_ \\| __|\n"
     "/ /_\\\\| | | (_) | |_| | |_) | /  _  \\__ \\__ \\ | (_| | | | | | | | | |  __/ | | | |_\n"
@@ -67,10 +66,26 @@ void main()
     " //  / / | | |/ _ \\/ __| __| |/ _ \\| '_ \\    |_ \\\n"                                 
     "/ \\_/ /| |_| |  __/\\__ \\ |_| | (_) | | | |  ___) |\n"                             
     "\\___,_\\ \\__,_|\\___||___/\\__|_|\\___/|_| |_| |____/\n\n"                                  
-    "       Develop by Pham Hoang Thien An - s3818286  and  Nguyen Manh Khang - s3864131"
     );
+    uart_puts("       Develop by Pham Hoang Thien An - s3818286  and  Nguyen Manh Khang - s3864131\n");
+    uart_puts("Welcome to Bare0S!\n");
+    uart_puts("Available commands:\n");
+    uart_puts("  playgame - Start the game\n");
+    uart_puts("  cls      - Clear the screen\n");
+    uart_puts("Usage: Type a command and press Enter.\n\n");
+}
+
+void main()
+{
+    // set up serial console
+    uart_init();
+   
+    // Display information
+    display_information();
+
     // Initialize frame buffer
     framebf_init();
+
     uart_puts("\nBare0S:>");
     // echo everything back
     while(1) {
@@ -80,7 +95,7 @@ void main()
             start_game_flag = 0;
 
             // Start the game loop
-            gameloop();
+            game_start_menu();
             
             // Print CLI prompt after exiting the game
             uart_puts("\nBare0S:>");

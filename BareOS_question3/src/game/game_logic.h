@@ -15,14 +15,16 @@ M: modulus
 
 int randomize(int min, int max);
 void navigate_home_menu(int *menu_selected_option, char *user_input);
+void navigate_level_selection(int *level_selected_option, char *user_input);
 void execute_home_option(int menu_selected_option, int *ship_selected_option, char *user_input, int *level_selected_option);
 void navigate_ship_selection(int *ship_selected_option, char *user_input);
 void display_how_to_play(char *user_input);
-void gameloop();
-void spawnMonsters(int monsters, int mons[][3], int count1[], int count3[], int status[], int level);
-void shootBullets(int fx[], int fy[], int count[], int status1[]);
-void checkCollisions(int monsters, int mons[][3], int status[], int fx[], int fy[], int status1[]);
-void eraseEntities(int monsters, int mons[][3], int status[], int status1[], int fy[], int fx[], int *status3, int *lives, int *lifes);
-void handleInput(int *ox1, int oy1, int ship);
-void updateBulletPositions(int fx[], int fy[], int ox1);
-void startGame(int num, int heart, int monsters, int level);
+void game_start_menu();
+int randomize(int min, int max);
+void spawnMonsters(int monsters, int monster_details[][3], int moveCount[], int moveThreshold[], int monster_status[], int level);
+void shootBullets(int fx[], int fy[], int bulletCooldowns[], int bullet_status[]);
+void checkCollisions(int monsters, int monster_details[][3], int monster_status[], int fx[], int fy[], int bullet_status[]);
+void eraseEntities(int monsters, int monster_details[][3], int monster_status[], int bullet_status[], int fy[], int fx[], int *shouldUpdateInterface, int *num_monster_alive, int *num_heart_left);
+void handleInput(int *ox, int oy, int ship);
+void updateBulletPositions(int fx[], int fy[], int ox);
+void game_loop(int num, int heart, int monsters, int level);

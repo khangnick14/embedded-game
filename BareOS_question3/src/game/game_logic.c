@@ -11,11 +11,13 @@ void navigate_home_menu(int *menu_selected_option, char *user_input) {
     while (1) {
         switch (*user_input) {
             case 's':
+                uart_puts("\nACK - HOME MENU: User pressed letter s to move down\n"); // Send ACK
                 *menu_selected_option = (*menu_selected_option + 100) % 300;
                 home(*menu_selected_option);
                 *user_input = uart_getc();
                 break;
             case 'w': 
+                uart_puts("\nACK - HOME MENU: User pressed letter w to move up\n"); // Send ACK
                 *menu_selected_option = (*menu_selected_option - 100) % 300;
                 if (*menu_selected_option < 0) {
                     *menu_selected_option = 200;
@@ -24,8 +26,10 @@ void navigate_home_menu(int *menu_selected_option, char *user_input) {
                 *user_input = uart_getc();
                 break;
             case '\n':
+                uart_puts("\nACK - HOME MENU: User pressed Enter to confirm selections\n"); // Send ACK
                 return;
             default:
+                uart_puts("\nNAK - HOME MENU: User pressed an invalid input \n"); // Send ACK
                 *user_input = uart_getc();
                 break;
         }
@@ -38,17 +42,35 @@ void navigate_level_selection(int *level_selected_option, char *user_input) {
         *user_input = uart_getc();
         switch (*user_input) {
             case 's':
+                uart_puts("\nACK - LEVEL MENU: User pressed letter s to move down\n"); // Send ACK
                 *level_selected_option = (*level_selected_option + 100) % 300;
                 break;
             case 'w': 
+                uart_puts("\nACK - LEVEL MENU: User pressed letter w to move up\n"); // Send ACK
                 *level_selected_option = (*level_selected_option - 100) % 300;
                 if (*level_selected_option < 0) {
                     *level_selected_option = 200;
                 }
                 break;
             case '\n':
+                uart_puts("\nACK - LEVEL MENU: User pressed Enter to confirm selections\n"); // Send ACK
+                switch (*level_selected_option) {
+                    case 0: // Easy
+                        uart_puts("\nACK - LEVEL MENU: User chose EASY mode\n"); // Send ACK
+                        break;
+                    case 100: // Medium
+                        uart_puts("\nACK - LEVEL MENU: User chose MEDIUM mode\n"); // Send ACK
+                        break;
+                    case 200: // Hard
+                        uart_puts("\nACK - LEVEL MENU: User chose HARD mode\n"); // Send ACK
+                        break;
+                    default:
+                        uart_puts("\nNAK - LEVEL MENU: User chose INVALID mode\n"); // Send ACK
+                        break;
+                }
                 return;
             default:
+                uart_puts("\nNAK - LEVEL MENU: User pressed an invalid input \n"); // Send ACK
                 break;
         }
     }
@@ -56,12 +78,15 @@ void navigate_level_selection(int *level_selected_option, char *user_input) {
 
 void execute_home_option(int menu_selected_option, int *ship_selected_option, char *user_input, int *level_selected_option) {
     if (menu_selected_option == 0) {
+        uart_puts("\nACK - HOME MENU: User choosed Start the game \n"); // Send ACK
         *level_selected_option = 0; // Reset level selected option
         navigate_level_selection(level_selected_option, user_input); // Navigate level selection screen
-        startGame(*ship_selected_option, 5, 34, *level_selected_option / 100); // Start the game with selected level
+        game_loop(*ship_selected_option, 5, 34, *level_selected_option / 100); // Start the game with selected level
     } else if (menu_selected_option == 100) {
+        uart_puts("\nACK - HOME MENU: User choosed How to play \n"); // Send ACK
         display_how_to_play(user_input);
     } else if (menu_selected_option == 200) {
+        uart_puts("\nACK - HOME MENU: User choosed Choose a ship \n");
         navigate_ship_selection(ship_selected_option, user_input);
     }
 }
@@ -72,17 +97,21 @@ void navigate_ship_selection(int *ship_selected_option, char *user_input) {
         *user_input = uart_getc();
         switch (*user_input) {
             case 'd':
+                uart_puts("\nACK - SHIP MENU: User pressed D to move to the right \n"); // Send ACK
                 *ship_selected_option = (*ship_selected_option + 200) % 600;
                 break;
             case 'a':
+                uart_puts("\nACK - SHIP MENU: User pressed A to move to the left \n"); // Send ACK
                 *ship_selected_option = (*ship_selected_option - 200) % 600;
                 if (*ship_selected_option < 0) {
                     *ship_selected_option = 400;
                 }
                 break;
             case '\n':
+                uart_puts("\nACK - SHIP MENU: User pressed Enter to confirm selections\n"); // Send ACK
                 return;
             default:
+                uart_puts("\nNAK - SHIP MENU: User pressed an invalid input \n"); // Send ACK
                 break;
         }
     }
@@ -93,12 +122,13 @@ void display_how_to_play(char *user_input) {
         howtoplay();
         *user_input = uart_getc();
         if (*user_input == '\n') {
+            uart_puts("\nACK - HOW TO PLAY MENU: User pressed Enter to return\n"); // Send ACK
             return;
         }
     }
 }
 
-void gameloop(){
+void game_start_menu(){
     static int menu_selected_option = 0;
     static int ship_selected_option = 0;
     static int level_selected_option = 0;
@@ -143,6 +173,10 @@ void spawnMonsters(int monsters, int monster_details[][3], int moveCount[], int 
         }
         // Check if it's time for this monster to move and it is still active
         if (moveCount[i] >= spawnRate && monster_status[i] == 0) {
+            if (moveCount[i] == spawnRate) {
+                // Monster is spawning from the top
+                uart_puts("\nACK - MONSTER SPAWN: A monster has spawned at the top\n");
+            }
             // Draw the monster
             drawMonster(monster_details[i][0], monster_details[i][1], monster_details[i][2]);
             // Erase the screen when the monster moves down
@@ -189,13 +223,15 @@ void checkCollisions(int monsters, int monster_details[][3], int monster_status[
 void eraseEntities(int monsters, int monster_details[][3], int monster_status[], int bullet_status[], int fy[], int fx[], int *shouldUpdateInterface, int *num_monster_alive, int *num_heart_left) {
     for (int i = 0; i < monsters; i++) {
         if (monster_status[i] == 1) { // Monster was hit by a bullet
-            erease64x64(monster_details[i][0], monster_details[i][1] - 2);
+            uart_puts("\nACK - GAME LOOP: a bullet hit a monster!\n"); // Send ACK
+            erase64x64(monster_details[i][0], monster_details[i][1] - 2);
             eraseBySize(monster_details[i][0], monster_details[i][1] - 4, 64, 2);
             monster_status[i] = 2; // Set to erased state
             (*num_monster_alive)--;
             *shouldUpdateInterface  = 1;
         } else if (monster_status[i] == 3) { // Monster reached the bottom
-            erease64x64(monster_details[i][0], monster_details[i][1] - 2);
+            uart_puts("\nACK - GAME LOOP: User has lost one heart!\n"); // Send ACK
+            erase64x64(monster_details[i][0], monster_details[i][1] - 2);
             eraseBySize(monster_details[i][0], monster_details[i][1] - 4, 64, 2);
             monster_status[i] = 2; // Set to erased state
             (*num_heart_left)--;
@@ -206,7 +242,7 @@ void eraseEntities(int monsters, int monster_details[][3], int monster_status[],
 
     for (int i = 0; i < 3; i++) {
         if (bullet_status[i] == 1) { // Bullet hit a monster
-            erease24x24(fx[i] + 20, fy[i] + 12);
+            erase24x24(fx[i] + 20, fy[i] + 12);
             eraseBySize(fx[i] + 20, fy[i] + 24 + 12, 24, 12);
             bullet_status[i] = 2; // Set to erased state
         }
@@ -216,10 +252,12 @@ void eraseEntities(int monsters, int monster_details[][3], int monster_status[],
 void handleInput(int *ox, int oy, int ship) {
     unsigned char c = getUart();
     if (c == 'a' && *ox > 300) {
+        uart_puts("\nACK - GAME LOOP: User pressed A to move the ship to the left\n"); // Send ACK
         *ox -= 10;
         drawShip(*ox, oy, ship);
         clearShip(*ox + 64, oy);
     } else if (c == 'd' && *ox < 1024 - 74) {
+        uart_puts("\nACK - GAME LOOP: User pressed D to move the ship to the right\n"); // Send ACK
         *ox += 10;
         drawShip(*ox, oy, ship);
         clearShip(*ox - 10, oy);
@@ -234,13 +272,13 @@ void updateBulletPositions(int fx[], int fy[], int ox) {
     }
 }
 
-void startGame(int num, int heart, int monsters, int level) {
+void game_loop(int num, int heart, int monsters, int level) {
     clearScreen();  // Clear screen first
 
     // Left sections: show number of aliens and current hearts
     drawline();   
-    showalien(monsters);
-    showheart(heart);
+    display_monster_alive(monsters);
+    display_heart_left(heart);
 
     int ship = (num == 0) ? 0 : (num == 200) ? 1 : 2;
     int ox = 630, oy = 650;
@@ -314,16 +352,18 @@ void startGame(int num, int heart, int monsters, int level) {
             shouldUpdateInterface = 0;
         }
 
-        showalien(num_monster_alive);
-        showheart(num_heart_left);
+        display_monster_alive(num_monster_alive);
+        display_heart_left(num_heart_left);
         drawline();
     }
 
     // Display end message
     if (num_monster_alive == 0) {
-        drawString(450, 200, "You won!!", 0x00ffffff, 7);
+        uart_puts("\nACK - GAME END: User has won the game\n"); // Send ACK
+        drawString(450, 200, "You won!!!", 0x00ffffff, 7);
     } else if (num_heart_left == 0) {
-        drawString(450, 200, "GameOver!!", 0x00ffffff, 7);
+        uart_puts("\nACK - GAME END: User has lost the game\n"); // Send ACK
+        drawString(450, 200, "GameOver!!!", 0x00ffffff, 7);
     }
     drawString(400, 500, "Press any key to return!!", 0x00ffffff, 3);
     while (uart_getc() != '\n');
