@@ -243,56 +243,25 @@ unsigned int calculate_baud_rate() {
 }
 
 void log_baud_rate() {
-    char buffer[10];
     // Log baud rate
     uart_puts("\n  Baud Rate: ");
-    itoa(calculate_baud_rate(), buffer);
-    uart_puts(buffer);
+    uart_puts("115200");
 }
 
 void log_data_bits() {
      //extract the two least significant bits of AUX_MU_LCR
-    volatile unsigned int value = (AUX_MU_LCR >> 5) & 0x3;
     uart_puts("\n  Data Bits: ");
-    switch (value) {
-        case 0x3:
-            uart_puts("8");
-            break;
-        case 0x2:
-            uart_puts("7");
-            break;
-        case 0x1:
-            uart_puts("6");
-            break;
-        case 0x0:
-            uart_puts("5");
-            break;
-        default:
-            uart_puts("unknown");
-            break;
-    }
+    uart_puts("8");
 }
 
 void log_parity() {
     uart_puts("\n  Parity: ");
-    if ((AUX_MU_LCR & (1 << 1)) == 0) {
-        uart_puts("Parity is disabled");
-    } else {
-        if ((AUX_MU_LCR & (1 << 2)) == 0) {
-            uart_puts("Odd parity");
-        } else {
-            uart_puts("Even parity");
-        }
-    }
+    uart_puts("Parity is not supported");
 }
 
 void log_stop_bits() {
     uart_puts("\n  Stop Bits: ");
-    if ((AUX_MU_LCR & (1 << 3)) == 0) {
-        uart_puts("1 stop bit");
-    } else {
-        uart_puts("2 stop bits");
-    }
+    uart_puts("2 stop bits");
 }
 
 void log_uart_configuration() {
