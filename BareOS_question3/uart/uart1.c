@@ -144,3 +144,92 @@ unsigned char getUart(){
         ch = uart_getc();
     return ch;
 }
+
+void itoa(int num, char* str) {
+    int i = 0;
+    int isNegative = 0;
+
+    // Handle 0
+    if (num == 0) {
+        str[i++] = '0';
+        str[i] = '\0';
+        return;
+    }
+    if (num < 0) {
+        isNegative = 1;
+        num = -num;
+    }
+    while (num != 0) {
+        int rem = num % 10;
+        str[i++] = rem + '0';
+        num = num / 10;
+    }
+    if (isNegative)
+        str[i++] = '-';
+
+    str[i] = '\0'; // Append null character
+
+    // Reverse the string
+    int start = 0;
+    int end = i - 1;
+    while (start < end) {
+        char temp = str[start];
+        str[start] = str[end];
+        str[end] = temp;
+        start++;
+        end--;
+    }
+}
+
+
+volatile int start_game_flag = 0;
+volatile int command_count = 0;
+
+void cli() {
+	static char cli_buffer[MAX_CMD_SIZE];
+	static int index = 0;
+    char count_str[10]; // Buffer to store the string representation of the command count
+
+	//read and send back each char
+    if (getUart() != '\n') { 
+        char c = uart_getc();
+	    uart_sendc(c);
+        //put into a buffer until got new line character
+	    if (c != '\n') {
+            if (c == '\b' && index > 0) {
+                uart_sendc(' ');
+                uart_sendc('\b');
+                cli_buffer[index - 1] = ' ';
+                index--;
+            } else if (c != '\b'){
+                cli_buffer[index] = c; //Store into the buffer
+                index++;
+            } else {
+                uart_sendc('>');
+            }
+    	} else {
+            cli_buffer[index] = '\0';
+            command_count ++;
+            if (compareStrings(cli_buffer, "playgame")) {
+                uart_puts("\nACK: Starting the game\n");
+                start_game_flag = 1;
+
+            } else if (compareStrings(cli_buffer, "cls")) {
+                uart_puts("\nACK: Clearing the screen\n");
+                clearScreen();
+            } else {
+                uart_puts("\nNAK: Invalid command\n");
+            }
+            // Log the command counts for debug
+            uart_puts("\n[DEBUG]: Number of commands received: ");
+            itoa(command_count, count_str);
+            uart_puts(count_str);
+            uart_puts("\nBare0S:>");
+            //Return to command line
+            index = 0;
+            for (int i = 0; i < 100; i++) {
+                cli_buffer[i] = '\0';
+            }
+        }
+	}
+}

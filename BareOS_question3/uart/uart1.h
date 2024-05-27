@@ -1,4 +1,6 @@
 #include "../src/utils/gpio.h"
+#include "../src/utils/utils.h"
+#include "../src/graphic/framebf.h"
 
 /* Auxilary mini UART (UART1) registers */
 #define AUX_ENABLE      (* (volatile unsigned int*)(MMIO_BASE+0x00215004))
@@ -14,6 +16,9 @@
 #define AUX_MU_STAT     (* (volatile unsigned int*)(MMIO_BASE+0x00215064))
 #define AUX_MU_BAUD     (* (volatile unsigned int*)(MMIO_BASE+0x00215068))
 
+#define MAX_CMD_SIZE 100
+extern volatile int start_game_flag;
+
 /* Function prototypes */
 void uart_init();
 void uart_sendc(char c);
@@ -24,3 +29,9 @@ void uart_dec(int num);
 
 unsigned char getUart();
 unsigned int uart_isReadByteReady();
+void itoa(int num, char* str);
+void cli();
+
+
+/* Function to get UART configuration*/
+// unsigned int calculate_baud_rate();

@@ -2,56 +2,7 @@
 #include "../uart/uart1.h"
 #include "./game/game_menu.h"
 #include "./game/game_logic.h"
-#include "./utils/utils.h"
 #include "./graphic/framebf.h"
-
-
-#define MAX_CMD_SIZE 100
-int start_game_flag = 0;
-
-void cli() {
-	static char cli_buffer[MAX_CMD_SIZE];
-	static int index = 0;
-
-	//read and send back each char
-    if (getUart() != '\n') { 
-        char c = uart_getc();
-	    uart_sendc(c);
-        //put into a buffer until got new line character
-	    if (c != '\n') {
-            if (c == '\b' && index > 0) {
-                uart_sendc(' ');
-                uart_sendc('\b');
-                cli_buffer[index - 1] = ' ';
-                index--;
-            } else if (c != '\b'){
-                cli_buffer[index] = c; //Store into the buffer
-                index++;
-            } else {
-                uart_sendc('>');
-            }
-    	}   else {
-            cli_buffer[index] = '\0';
-            if (compareStrings(cli_buffer, "playgame")) {
-                uart_puts("\nACK: Starting the game\n");
-                start_game_flag = 1;
-
-            } else if (compareStrings(cli_buffer, "cls")) {
-                uart_puts("\nACK: Clearing the screen\n");
-                clearScreen();
-            } else {
-                uart_puts("\nNAK: Invalid command\n");
-            }
-
-            uart_puts("Bare0S:>");
-            //Return to command line
-            index = 0;
-            for (int i = 0; i < 100; i++) {
-                cli_buffer[i] = '\0';
-            }
-        }
-	}
-}
 
 void display_information() {
  uart_puts("\n\n\n"
@@ -101,6 +52,5 @@ void main()
             uart_puts("\nBare0S:>");
         }
         wait_msec(10);
-
     }
 }
