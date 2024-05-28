@@ -5,8 +5,6 @@
 #include "../graphic/game_graphic.h"
 #include "../../uart/uart1.h"
 
-
-
 void navigate_home_menu(int *menu_selected_option, char *user_input) {
     while (1) {
         switch (*user_input) {
@@ -152,7 +150,7 @@ int randomize(int min, int max){
     return (lcg_state % (max - min + 1)) + min;
 }
 
-void spawnMonsters(int monsters, int monster_details[][3], int moveCount[], int moveThreshold[], int monster_status[], int level) {
+void spawnMonsters(int monsters, int monster_details[][3], int moveCount[], int monster_status[], int level) {
     for (int i = 0; i < monsters; i++) {
         int spawnRate = 0;
         int descentSpeed = 1; // Default descent speed
@@ -208,10 +206,15 @@ void shootBullets(int fx[], int fy[], int bulletCooldowns[], int bullet_status[]
 }
 
 void checkCollisions(int monsters, int monster_details[][3], int monster_status[], int fx[], int fy[], int bullet_status[]) {
+    // Loop through each bullets
     for (int i = 0; i < 3; i++) {
+        //Loop through each monster
         for (int j = 0; j < monsters; j++) {
+            // Check if the bullet's y-coordinate is within the range of the monster's y-coordinate
             if (monster_details[j][1] + 64 > fy[i] && monster_details[j][1] + 64 - 16 < fy[i] && monster_details[j][1] > 30) {
+                // Check if the bullet's x-coordinate is within the range of the monster's x-coordinate
                 if (fx[i] >= monster_details[j][0] - 16 - 20 && fx[i] <= monster_details[j][0] + 64 - 8 - 20 && bullet_status[i] != 2 && monster_status[j] != 2) {
+                    // Update the status of the monster and the bullet to indicate a hit
                     monster_status[j] = 1;
                     bullet_status[i] = 1;
                 }
@@ -289,7 +292,6 @@ void game_loop(int num, int heart, int monsters, int level) {
     
     // Store count to define when a monster is spawned
     int moveCount[monsters]; 
-    int moveThreshold[monsters];
 
     /* Store the current monster status
     0: Active
@@ -322,15 +324,12 @@ void game_loop(int num, int heart, int monsters, int level) {
 
         moveCount[i] = 0;
         monster_status[i] = 0;
-
-        // random a time when monster is spawned
-        moveThreshold[i] = i * randomize(30, 45);
     }
 
     while (num_heart_left > 0 && num_monster_alive > 0) {
         drawShip(ox, oy, ship);
 
-        spawnMonsters(monsters, monster_details, moveCount, moveThreshold, monster_status, level);
+        spawnMonsters(monsters, monster_details, moveCount, monster_status, level);
         shootBullets(fx, fy, bulletCooldowns, bullet_status);
 
         wait_msec(40000);

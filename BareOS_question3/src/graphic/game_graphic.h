@@ -3,7 +3,6 @@
 
 /* List of functions to draw game object */
 void drawMonster(int x, int y, int num);
-void eraseMonster(int x, int y);
 void drawShip(int x, int y, int num);
 void clearShip(int x, int y);
 void drawArrow(int x, int y);

@@ -21,7 +21,7 @@ void navigate_ship_selection(int *ship_selected_option, char *user_input);
 void display_how_to_play(char *user_input);
 void game_start_menu();
 int randomize(int min, int max);
-void spawnMonsters(int monsters, int monster_details[][3], int moveCount[], int moveThreshold[], int monster_status[], int level);
+void spawnMonsters(int monsters, int monster_details[][3], int moveCount[], int monster_status[], int level);
 void shootBullets(int fx[], int fy[], int bulletCooldowns[], int bullet_status[]);
 void checkCollisions(int monsters, int monster_details[][3], int monster_status[], int fx[], int fy[], int bullet_status[]);
 void eraseEntities(int monsters, int monster_details[][3], int monster_status[], int bullet_status[], int fy[], int fx[], int *shouldUpdateInterface, int *num_monster_alive, int *num_heart_left);
